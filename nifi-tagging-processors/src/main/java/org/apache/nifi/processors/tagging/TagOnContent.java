@@ -50,6 +50,7 @@ import org.apache.nifi.processor.util.StandardValidators;
 import org.apache.nifi.stream.io.StreamUtils;
 
 //TODO: add logging
+//TODO: add support for regex evaluation order
 
 /** Configs
  TagOnContent
@@ -112,8 +113,7 @@ public class TagOnContent extends AbstractProcessor {
             .build();
     public static final PropertyDescriptor TAG_STRATEGY = new PropertyDescriptor.Builder()
             .name("Tag Strategy")
-            .description("Determines if the processor should stop after first match, or if multiple tags are supported. " +
-                    "Note - Regular Expressions are evaluated in the order the properties are added to the processor.")
+            .description("Determines if the processor should stop after first match, or if multiple tags are supported. ")
             .required(true)
             .allowableValues(SINGLE_TAG, MULTI_TAG)
             .defaultValue(SINGLE_TAG)

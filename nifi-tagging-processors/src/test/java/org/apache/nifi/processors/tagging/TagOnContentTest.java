@@ -16,10 +16,15 @@
  */
 package org.apache.nifi.processors.tagging;
 
+import java.io.IOException;
+import java.nio.file.Paths;
+
 import org.apache.nifi.util.TestRunner;
 import org.apache.nifi.util.TestRunners;
+
 import org.junit.Before;
 import org.junit.Test;
+
 
 
 public class TagOnContentTest {
@@ -32,8 +37,69 @@ public class TagOnContentTest {
     }
 
     @Test
-    public void testProcessor() {
+    public void singleTag() throws IOException {
+        final TestRunner runner = TestRunners.newTestRunner(new TagOnContent());
+        runner.setProperty(TagOnContent.MATCH_REQUIREMENT, TagOnContent.MATCH_SUBSEQUENCE);
+        runner.setProperty(TagOnContent.ATTRIBUTE_TO_UPDATE, "mytag");
+        runner.setProperty("hi", "Hello");
+        runner.setProperty("there", "Human");
 
+        runner.enqueue(Paths.get("src/test/resources/hello.txt"));
+
+        runner.run();
+        runner.assertAllFlowFilesContainAttribute(TagOnContent.REL_MATCH, "mytag");
+        runner.getFlowFilesForRelationship(TagOnContent.REL_MATCH).get(0).assertAttributeEquals("mytag", "hi");
+        runner.assertTransferCount(TagOnContent.REL_MATCH, 1);
+        runner.assertTransferCount(TagOnContent.REL_NO_MATCH, 0);
     }
+
+    @Test
+    public void multiTag() throws IOException {
+        final TestRunner runner = TestRunners.newTestRunner(new TagOnContent());
+        runner.setProperty(TagOnContent.MATCH_REQUIREMENT, TagOnContent.MATCH_SUBSEQUENCE);
+        runner.setProperty(TagOnContent.ATTRIBUTE_TO_UPDATE, "mytag");
+        runner.setProperty(TagOnContent.TAG_STRATEGY, TagOnContent.MULTI_TAG);
+        runner.setProperty("hi", "Hello");
+        runner.setProperty("there", "World");
+
+
+
+        runner.enqueue(Paths.get("src/test/resources/hello.txt"));
+
+        runner.run();
+        runner.assertAllFlowFilesContainAttribute(TagOnContent.REL_MATCH, "mytag.1");
+        runner.assertAllFlowFilesContainAttribute(TagOnContent.REL_MATCH, "mytag.2");
+        runner.assertTransferCount(TagOnContent.REL_MATCH, 1);
+        runner.assertTransferCount(TagOnContent.REL_NO_MATCH, 0);
+    }
+
+    @Test
+    public void noTag() throws IOException {
+        final TestRunner runner = TestRunners.newTestRunner(new TagOnContent());
+        runner.setProperty(TagOnContent.MATCH_REQUIREMENT, TagOnContent.MATCH_SUBSEQUENCE);
+        runner.setProperty(TagOnContent.ATTRIBUTE_TO_UPDATE, "mytag");
+        runner.setProperty("attr", "GoodBye");
+
+        runner.enqueue(Paths.get("src/test/resources/hello.txt"));
+
+        runner.run();
+        runner.assertTransferCount(TagOnContent.REL_MATCH, 0);
+        runner.assertTransferCount(TagOnContent.REL_NO_MATCH, 1);
+    }
+
+    @Test
+    public void testBufferSize() throws IOException {
+        final TestRunner runner = TestRunners.newTestRunner(new TagOnContent());
+        runner.setProperty(TagOnContent.MATCH_REQUIREMENT, TagOnContent.MATCH_ALL);
+        runner.setProperty(TagOnContent.BUFFER_SIZE, "3 B");
+        runner.setProperty("rel", "Hel");
+
+        runner.enqueue(Paths.get("src/test/resources/hello.txt"));
+
+        runner.run();
+        runner.assertAllFlowFilesTransferred(TagOnContent.REL_MATCH, 1);
+    }
+
+
 
 }
