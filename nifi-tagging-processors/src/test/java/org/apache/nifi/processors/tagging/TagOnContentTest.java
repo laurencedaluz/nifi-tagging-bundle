@@ -58,7 +58,7 @@ public class TagOnContentTest {
         final TestRunner runner = TestRunners.newTestRunner(new TagOnContent());
         runner.setProperty(TagOnContent.MATCH_REQUIREMENT, TagOnContent.MATCH_SUBSEQUENCE);
         runner.setProperty(TagOnContent.ATTRIBUTE_TO_UPDATE, "mytag");
-        runner.setProperty(TagOnContent.TAG_STRATEGY, TagOnContent.MULTI_TAG);
+        runner.setProperty(TagOnContent.TAG_STRATEGY, TagOnContent.MULTI_TAG.getValue());
         runner.setProperty("hi", "Hello");
         runner.setProperty("there", "World");
 

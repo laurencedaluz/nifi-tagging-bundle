@@ -35,6 +35,7 @@ import org.apache.nifi.annotation.behavior.InputRequirement.Requirement;
 import org.apache.nifi.annotation.documentation.CapabilityDescription;
 import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
+import org.apache.nifi.components.AllowableValue;
 import org.apache.nifi.components.PropertyDescriptor;
 import org.apache.nifi.expression.AttributeValueDecorator;
 import org.apache.nifi.flowfile.FlowFile;
@@ -51,33 +52,6 @@ import org.apache.nifi.stream.io.StreamUtils;
 
 //TODO: add logging
 //TODO: add support for regex evaluation order
-
-/** Configs
- TagOnContent
-    - Attribute to Update
-    - Match Requirement
-        | exact
-        | contain match
-    - Support multiple matches
-    - Character Set
-    - Content Buffer Size
-    - [Dynamic Properties]
-
- TagOnContentWithMapping
-    - Attribute to Update
-    - Match Requirement
-        | exact
-        | contain match
-    - Support multiple matches
-    - Character Set
-    - Content Buffer Size
-    - Mapping File
-    - Mapping File Refresh Interval
-
-
- */
-
-
 
 @EventDriven
 @SideEffectFree
@@ -100,8 +74,11 @@ public class TagOnContent extends AbstractProcessor {
     public static final String MATCH_ALL = "content must match exactly";
     public static final String MATCH_SUBSEQUENCE = "content must contain match";
 
-    public static final String SINGLE_TAG = "stop on first match";
-    public static final String MULTI_TAG = "tag with all matches";
+    public static final AllowableValue SINGLE_TAG = new AllowableValue("SINGLE_TAG", "Single tag based on first match",
+            "In single tag mode, once a match is hit, remaining Regular Expressions are not evaluated.");
+    public static final AllowableValue MULTI_TAG = new AllowableValue("MULTI_TAG", "Tag with all matches",
+            "In multi tag mode, all Regular Expressions are evaluated and tags are added as Attr.1, Attr.2, ...");
+
 
     public static final PropertyDescriptor ATTRIBUTE_TO_UPDATE = new PropertyDescriptor.Builder()
             .name("Attribute to update")
@@ -116,7 +93,7 @@ public class TagOnContent extends AbstractProcessor {
             .description("Determines if the processor should stop after first match, or if multiple tags are supported. ")
             .required(true)
             .allowableValues(SINGLE_TAG, MULTI_TAG)
-            .defaultValue(SINGLE_TAG)
+            .defaultValue(SINGLE_TAG.getValue())
             .build();
     public static final PropertyDescriptor BUFFER_SIZE = new PropertyDescriptor.Builder()
             .name("Content Buffer Size")
@@ -217,7 +194,7 @@ public class TagOnContent extends AbstractProcessor {
 
         // Check tagging strategy
         final boolean singleTag;
-        if (context.getProperty(TAG_STRATEGY).getValue().equalsIgnoreCase(SINGLE_TAG)) {
+        if (context.getProperty(TAG_STRATEGY).getValue().equalsIgnoreCase(SINGLE_TAG.getValue())) {
             singleTag = true;
         } else {
             singleTag = false;
